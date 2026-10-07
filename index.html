@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBTI测试</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background-color: #e0f2fe; color: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 12px; }
+.card-container { width: 100%; max-width: 460px; height: 740px; background-color: #ffffff; border-radius: 20px; border: 1px solid #bae6fd; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(14, 165, 233, 0.15); position: relative; overflow: hidden; }
+.header { border-bottom: 1px solid #e0f2fe; padding-bottom: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 18px; font-weight: 700; color: #0284c7; }
+.header p { font-size: 11px; color: #0369a1; margin-top: 2px; }
+.action-btn { background: linear-gradient(135deg, #0284c7, #14b8a6); border: none; color: #fff; padding: 8px 16px; font-size: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2); }
+.action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.view-panel { display: flex; flex-direction: column; flex: 1; overflow-y: auto; gap: 10px; padding-right: 4px; }
+.view-panel::-webkit-scrollbar { width: 4px; }
+.view-panel::-webkit-scrollbar-thumb { background: #bae6fd; border-radius: 4px; }
+.intro-desc { font-size: 12px; color: #334155; line-height: 1.5; margin-bottom: 4px; background: #f0f9ff; padding: 10px; border-radius: 10px; border: 1px solid #e0f2fe; }
+.types-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.type-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 4px; text-align: center; cursor: pointer; transition: 0.2s; }
+.type-card:hover { background-color: #e0f2fe; border-color: #38bdf8; transform: translateY(-1px); }
+.type-card .t-code { font-size: 13px; font-weight: 700; color: #0284c7; }
+.type-card .t-name { font-size: 11px; color: #64748b; margin-top: 2px; }
+.test-container { display: none; flex-direction: column; flex: 1; justify-content: space-between; }
+.question-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: #0f172a; line-height: 1.5; background: #f0f9ff; padding: 12px; border-radius: 10px; border-left: 4px solid #0284c7; }
+.options-list { display: flex; flex-direction: column; gap: 8px; }
+.option-btn { background-color: #f8fafc; border: 1px solid #cbd5e1; color: #334155; padding: 11px 14px; border-radius: 10px; text-align: left; font-size: 13px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+.option-btn:hover { background-color: #e0f2fe; border-color: #0284c7; color: #0284c7; }
+.progress { font-size: 11px; color: #0284c7; text-align: right; margin-top: 8px; font-weight: 600; }
+.result-container { display: none; flex-direction: column; flex: 1; overflow-y: auto; gap: 10px; }
+.result-title { font-size: 18px; font-weight: 700; color: #0284c7; text-align: center; margin-top: 4px; }
+.dimension-bar { background: #f8fafc; border-radius: 8px; padding: 10px; border: 1px solid #e2e8f0; }
+.dim-info { display: flex; justify-content: space-between; font-size: 11px; color: #334155; margin-bottom: 6px; font-weight: 600; }
+.dim-track { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+.dim-fill { height: 100%; background: linear-gradient(90deg, #0284c7, #14b8a6); border-radius: 4px; }
+.analysis-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px; font-size: 12px; color: #334155; line-height: 1.6; }
+.analysis-box h3 { font-size: 13px; color: #0284c7; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="card-container">
+<div class="header">
+<div>
+<h1>MBTI测试</h1>
+<p>16 PERSONALITY TYPES TEST</p>
+</div>
+<button class="action-btn" id="actionBtn" onclick="startTest()">开始60题测试</button>
+</div>
+
+<!-- 首页 -->
+<div class="view-panel" id="homeView">
+<div class="intro-desc">MBTI人格理论将人群分为16种类型。本测试采用标准的5级程度量表。点击下方卡片可查看对应人格特性，或点击右上方按钮开始60题深度测试。</div>
+<div class="types-grid" id="typesGrid"></div>
+</div>
+
+<!-- 答题页 -->
+<div class="test-container" id="testView">
+<div>
+<div class="question-title" id="qTitle">加载中...</div>
+<div class="options-list" id="qOptions"></div>
+</div>
+<div class="progress" id="qProgress">1 / 60</div>
+</div>
+
+<!-- 结果页 -->
+<div class="result-container" id="resultView">
+<div class="result-title" id="resTypeCode">测试结果</div>
+<div id="dimBars" style="display:flex; flex-direction:column; gap:8px;"></div>
+<div class="analysis-box">
+<h3>人格深度解析</h3>
+<div id="resDesc">暂无解析</div>
+</div>
+</div>
+</div>
+
+<script>
+const allTypes = [
+{code:"INTJ", name:"建筑师"},{code:"INTP", name:"逻辑学家"},{code:"ENTJ", name:"指挥官"},{code:"ENTP", name:"辩论家"},
+{code:"INFJ", name:"提倡者"},{code:"INFP", name:"调停者"},{code:"ENFJ", name:"主人公"},{code:"ENFP", name:"竞选者"},
+{code:"ISTJ", name:"物流师"},{code:"ISFJ", name:"守卫者"},{code:"ESTJ", name:"总经理"},{code:"ESFJ", name:"执政官"},
+{code:"ISTP", name:"鉴赏家"},{code:"ISFP", name:"探险家"},{code:"ESTP", name:"企业家"},{code:"ESFP", name:"表演者"}
+];
+
+const typeDescriptions = {
+"INTJ": "独立独立、逻辑严密、富有远见的战略家。擅长系统性思考与长远规划，追求知识与掌控感。",
+"INTP": "充满好奇心的理性思考者，喜欢探究事物背后的底层逻辑与理论架构，逻辑极其清晰。",
+"ENTJ": "果断、自信、极具领导魄力的指挥官。善于制定战略并高效组织资源来实现目标。",
+"ENTP": "机智敏捷、热衷智力挑战的革新者。擅长打破常规，从多角度审视问题并展开辩论。",
+"INFJ": "富有远见、理想主义且深刻的提倡者。极具同理心，致力于追求内心价值与帮助他人。",
+"INFP": "温和、敏感、注重内在价值的调停者。内心世界丰富，追求真实的自我表达与情感共鸣。",
+"ENFJ": "富有感染力与同理心的领袖。擅长激发他人潜力，关注团队合作与群体和谐。",
+"ENFP": "充满热情、富有想象力的自由灵魂。善于挖掘无限可能，社交能力与适应力极强。",
+"ISTJ": "严肃、严谨、极其可靠的实干家。尊重规则与传统，做事讲求条理与事实依据。",
+"ISFJ": "体贴、忠诚、有责任感的守护者。默默关注细节，致力于为他人提供务实的帮助与安全感。",
+"ESTJ": "讲求实际、高效且极具组织能力的管理者。推崇秩序、标准与明确的执行流程。",
+"ESFJ": "热心、受欢迎且注重和谐的协调者。重视人际关系，乐于照顾身边人的实际需求。",
+"ISTP": "冷静、务实且手艺精湛的观察者。擅长分析机械与物理规律，随机应变能力极佳。",
+"ISFP": "艺术气质浓郁、灵活包容的探险家。追求生活中的美感与当下真实的体验。",
+"ESTP": "务实、敏捷、勇于冒险的行动派。善于捕捉眼前的机遇，能快速解决突发问题。",
+"ESFP": "充满活力、热情随性的表演者。喜欢成为焦点，乐于把快乐与活力带给周围的人。"
+};
+
+// 60道测试题列表（题干自带编号）
+const questions = [
+{ title: "1. 经过一周高强度的工作或学习后，你更倾向于通过社交聚会或热闹的活动来恢复精力。", target: "E" },
+{ title: "2. 在多人社交聚会上，你通常习惯主动与陌生人打招呼并拓展话题。", target: "E" },
+{ title: "3. 当遇到困难或心事时，你的第一反应通常是找亲友倾诉并在交流中理清思路。", target: "E" },
+{ title: "4. 你更喜欢充满互动、团队讨论和热烈氛围的工作与学习环境。", target: "E" },
+{ title: "5. 在新环境中，你结识新朋友的速度通常非常快，能迅速融入新圈子。", target: "E" },
+{ title: "6. 独处太久会让你感到精疲力竭，需要与人交流来重新获得活力。", target: "E" },
+{ title: "7. 在团队会议中，你通常习惯边想边说，积极快速地表达观点。", target: "E" },
+{ title: "8. 你非常享受或完全不排斥成为人群中的焦点。", target: "E" },
+{ title: "9. 你的日常兴趣爱好更偏向于多人参与的活动、团队运动或集体聚会。", target: "E" },
+{ title: "10. 在陌生场合，你通常会主动发起话题以打破尴尬沉默。", target: "E" },
+{ title: "11. 你觉得打电话直接高效，很喜欢通过电话与人交流。", target: "E" },
+{ title: "12. 你的朋友圈规模广泛且多元，认识各个领域的人。", target: "E" },
+{ title: "13. 当突然有空闲时间时，你更倾向于约朋友出门玩或者参加活动。", target: "E" },
+{ title: "14. 别人对你的常见评价是开朗、外向、有活力、善于表达。", target: "E" },
+{ title: "15. 在处理复杂事情时，你更习惯边与他人沟通探讨边得出方案。", target: "E" },
+
+{ title: "16. 在学习或理解新概念时，你更关注整体的概念、未来的可能性和底层逻辑。", target: "N" },
+{ title: "17. 当思考未来时，你更容易被宏大的远景、潜在的变化和创新思考所吸引。", target: "N" },
+{ title: "18. 你更信任基于直觉、灵感与理论推理得出的结论。", target: "N" },
+{ title: "19. 在日常生活中，你经常容易发呆或走神去思考奇奇怪怪的哲学或科幻问题。", target: "N" },
+{ title: "20. 面对复杂的操作说明书，你通常会粗略看下大概逻辑就凭感觉直接动手。", target: "N" },
+{ title: "21. 在文学或影视作品中，你更喜欢充满隐喻、象征意味和奇幻脑洞的题材。", target: "N" },
+{ title: "22. 当有人向你讲一件事情时，你更倾向于快速听懂对方表达的核心意图与隐藏涵义。", target: "N" },
+{ title: "23. 你的思维模式跳跃性强，容易从一件事联想到另一件事。", target: "N" },
+{ title: "24. 你经常会质疑传统规则与惯例的合理性，喜欢尝试创新突破。", target: "N" },
+{ title: "25. 你更希望别人称赞你非常有创意、有见地、有灵性。", target: "N" },
+{ title: "26. 在规划旅行时，你倾向于定个大概方向，保留随机探索的惊喜。", target: "N" },
+{ title: "27. 你对人类未来、宇宙奥秘、抽象理论等话题更感兴趣。", target: "N" },
+{ title: "28. 当解决一个难题时，你更擅长提出全新的解题思路与全新视角。", target: "N" },
+{ title: "29. 你的观察力更多体现在能敏锐察觉到氛围变化和潜在的发展趋势。", target: "N" },
+{ title: "30. 你更倾向于做一个开辟新领域的开创者与思考者。", target: "N" },
+
+{ title: "31. 在做重大决定时，你最优先考虑的是客观的逻辑、事实分析与利弊权衡。", target: "T" },
+{ title: "32. 当朋友找你吐槽烦恼时，你的第一反应通常是帮他分析问题原因并提供解决方案。", target: "T" },
+{ title: "33. 你认为原则大于一切，在处理规则时标准应当一视同仁。", target: "T" },
+{ title: "34. 当与他人发生意见分歧时，你更看重谁的逻辑更严密、更有事实依据。", target: "T" },
+{ title: "35. 别人对你的直观评价更容易是理性、冷静、客观甚至有点冷酷。", target: "T" },
+{ title: "36. 在批评他人或指出问题时，你的风格是直截了当指出问题所在，注重效率。", target: "T" },
+{ title: "37. 你认为智商极高、逻辑严密、能力出众的人更具魅力。", target: "T" },
+{ title: "38. 在判断一件事情对错时，你更容易站在旁观者视角保持中立理智。", target: "T" },
+{ title: "39. 面对别人的夸奖，你心里更在意自己的实际能力是否得到了客观认可。", target: "T" },
+{ title: "40. 当团队中有人效率低下拖后腿时，你会客观指出其不足并按制度规范处理。", target: "T" },
+{ title: "41. 你对“成功”的定义更偏向于实现了既定目标，获得了客观上的成就与掌控。", target: "T" },
+{ title: "42. 你较少被感人的电影或音乐打动落泪，更多是以理智视角审视剧情。", target: "T" },
+{ title: "43. 在争论中赢得了逻辑，但破坏了关系，你认为事实胜于雄辩，道理对了最重要。", target: "T" },
+{ title: "44. 你处理情绪的方式通常是用逻辑剖析情绪产生的原因并将其压制化解。", target: "T" },
+{ title: "45. 你对毫无逻辑、蛮不讲理的人感到最无法忍受。", target: "T" },
+
+{ title: "46. 你的日常生活与工作习惯喜欢制定明确计划清单并严格按计划执行。", target: "J" },
+{ title: "47. 面对工作或作业的截止日期，你通常会提前安排时间，按步骤提早完成。", target: "J" },
+{ title: "48. 你的房间或工作台通常保持整洁有序，物品归类摆放整齐。", target: "J" },
+{ title: "49. 当原本计划好的行程突然被改变时，你会感到焦虑不安，不太喜欢突发的变数。", target: "J" },
+{ title: "50. 做决定对你来说通常是迅速且果断的，喜欢尽快尘埃落定。", target: "J" },
+{ title: "51. 你非常依赖清单（To-Do List），每划掉一项都会感到极度舒适。", target: "J" },
+{ title: "52. 在开始一项新项目前，你习惯先制定出详细的步骤与时间节点表。", target: "J" },
+{ title: "53. 你的作息习惯规律且可预测。", target: "J" },
+{ title: "54. 对于未完成的任务，你心里总是挂念，无法安心休息。", target: "J" },
+{ title: "55. 在买大件商品前，你会提前做好功课，明确目标后直接购买。", target: "J" },
+{ title: "56. 你更喜欢稳扎稳打、按部就班地平稳推进的工作节奏。", target: "J" },
+{ title: "57. 相较于未知的可能性，你更偏好确定的结果与掌控感。", target: "J" },
+{ title: "58. 在安排休假时，你会提前把酒店、门票、路线全部预订确认完毕。", target: "J" },
+{ title: "59. 当听到“我们要计划一下”时，你的第一反应是感觉太好了，心里更有底。", target: "J" },
+{ title: "60. 总体来说，你更希望自己的生活是井井有条、有条不紊且可预测的。", target: "J" }
+];
+
+let currentQ = 0;
+let scores = { E: 0, I: 0, N: 0, S: 0, T: 0, F: 0, J: 0, P: 0 };
+const opposites = { E: 'I', I: 'E', N: 'S', S: 'N', T: 'F', F: 'T', J: 'P', P: 'J' };
+
+function renderHome() {
+  const grid = document.getElementById('typesGrid');
+  grid.innerHTML = '';
+  allTypes.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'type-card';
+    card.innerHTML = `<div class="t-code">${t.code}</div><div class="t-name">${t.name}</div>`;
+    card.onclick = () => alert(`${t.code} (${t.name})：\n${typeDescriptions[t.code]}`);
+    grid.appendChild(card);
+  });
+}
+
+function startTest() {
+  currentQ = 0;
+  scores = { E: 0, I: 0, N: 0, S: 0, T: 0, F: 0, J: 0, P: 0 };
+  document.getElementById('homeView').style.display = 'none';
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('testView').style.display = 'flex';
+  document.getElementById('actionBtn').innerText = '放弃测试';
+  document.getElementById('actionBtn').onclick = goHome;
+  showQuestion();
+}
+
+function goHome() {
+  document.getElementById('testView').style.display = 'none';
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('homeView').style.display = 'flex';
+  document.getElementById('actionBtn').innerText = '开始60题测试';
+  document.getElementById('actionBtn').onclick = startTest;
+}
+
+function showQuestion() {
+  const q = questions[currentQ];
+  // 仅显示题干文本，避免重复添加题号
+  document.getElementById('qTitle').innerText = q.title;
+  document.getElementById('qProgress').innerText = `${currentQ + 1} / 60`;
+  
+  const optsContainer = document.getElementById('qOptions');
+  optsContainer.innerHTML = '';
+  
+  const optionsConfig = [
+    { text: "非常符合", weight: 2 },
+    { text: "比较符合", weight: 1 },
+    { text: "中立 / 难说", weight: 0 },
+    { text: "比较不符", weight: -1 },
+    { text: "非常不符", weight: -2 }
+  ];
+
+  optionsConfig.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerText = opt.text;
+    btn.onclick = () => selectOption(q.target, opt.weight);
+    optsContainer.appendChild(btn);
+  });
+}
+
+function selectOption(targetDim, weight) {
+  const oppDim = opposites[targetDim];
+  if (weight > 0) {
+    scores[targetDim] += weight;
+  } else if (weight < 0) {
+    scores[oppDim] += Math.abs(weight);
+  }
+  
+  currentQ++;
+  if(currentQ < 60) {
+    showQuestion();
+  } else {
+    calcResult();
+  }
+}
+
+function calcResult() {
+  document.getElementById('testView').style.display = 'none';
+  const resView = document.getElementById('resultView');
+  resView.style.display = 'flex';
+  document.getElementById('actionBtn').innerText = '重新测试';
+  document.getElementById('actionBtn').onclick = startTest;
+
+  let eTotal = (scores.E + 1) + (scores.I + 1);
+  let ePct = Math.round(((scores.E + 1) / eTotal) * 100);
+  let iPct = 100 - ePct;
+
+  let nTotal = (scores.N + 1) + (scores.S + 1);
+  let nPct = Math.round(((scores.N + 1) / nTotal) * 100);
+  let sPct = 100 - nPct;
+
+  let tTotal = (scores.T + 1) + (scores.F + 1);
+  let tPct = Math.round(((scores.T + 1) / tTotal) * 100);
+  let fPct = 100 - tPct;
+
+  let jTotal = (scores.J + 1) + (scores.P + 1);
+  let jPct = Math.round(((scores.J + 1) / jTotal) * 100);
+  let pPct = 100 - jPct;
+
+  let finalType = (ePct >= iPct ? 'E' : 'I') +
+                  (nPct >= sPct ? 'N' : 'S') +
+                  (tPct >= fPct ? 'T' : 'F') +
+                  (jPct >= pPct ? 'J' : 'P');
+
+  let typeObj = allTypes.find(x => x.code === finalType) || { name: "" };
+  document.getElementById('resTypeCode').innerText = `你的MBTI类型为：${finalType} (${typeObj.name})`;
+
+  const bars = document.getElementById('dimBars');
+  bars.innerHTML = `
+    <div class="dimension-bar"><div class="dim-info"><span>外向 E (${ePct}%)</span><span>内向 I (${iPct}%)</span></div><div class="dim-track"><div class="dim-fill" style="width: ${ePct}%"></div></div></div>
+    <div class="dimension-bar"><div class="dim-info"><span>直觉 N (${nPct}%)</span><span>实感 S (${sPct}%)</span></div><div class="dim-track"><div class="dim-fill" style="width: ${nPct}%"></div></div></div>
+    <div class="dimension-bar"><div class="dim-info"><span>思考 T (${tPct}%)</span><span>情感 F (${fPct}%)</span></div><div class="dim-track"><div class="dim-fill" style="width: ${tPct}%"></div></div></div>
+    <div class="dimension-bar"><div class="dim-info"><span>判断 J (${jPct}%)</span><span>知觉 P (${pPct}%)</span></div><div class="dim-track"><div class="dim-fill" style="width: ${jPct}%"></div></div></div>
+  `;
+
+  document.getElementById('resDesc').innerText = typeDescriptions[finalType] || "恭喜你完成了全部60道专业的MBTI倾向测试！";
+}
+
+renderHome();
+</script>
+</body>
+</html>
+
+
